@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+ultralytics
+opencv-python
+numpy
+lap
+python-multipart
+pyyaml

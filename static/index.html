@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crime Weapon Detection &amp; Tracking</title>
+<link rel="icon" href="/static/icon.png">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <img class="brand-icon" src="/static/icon.png" alt="">
+    <div class="brand-text">
+      <h1>Crime Weapon Detection &amp; Tracking</h1>
+      <p>Real-time gun detection and tracking for crime scene monitoring</p>
+    </div>
+  </div>
+  <img class="brand-logo" src="/static/webvoltz.png" alt="webvoltz">
+</header>
+
+<nav class="toolbar">
+  <div class="toolbar-actions">
+    <button class="btn" id="webcamBtn">Use Webcam</button>
+    <label class="btn" id="videoBtn">Upload Video<input type="file" id="videoInput" accept="video/mp4"></label>
+    <label class="btn" id="imageBtn">Upload Image<input type="file" id="imageInput" accept="image/png,image/jpeg"></label>
+    <button class="btn" id="logsBtn">Show Logs</button>
+    <button class="btn" id="stopBtn">Stop</button>
+  </div>
+  <div class="toolbar-status" id="toolbarStatus">Idle</div>
+</nav>
+
+<section class="cards">
+  <div class="card"><span class="card-k">Gun tracks</span><span class="card-v" id="statTracks">0</span></div>
+  <div class="card"><span class="card-k">Detections</span><span class="card-v" id="statCount">0</span></div>
+  <div class="card"><span class="card-k">Backend FPS</span><span class="card-v" id="statFps">0.0</span></div>
+  <div class="card"><span class="card-k">Frame</span><span class="card-v" id="statFrames">0</span></div>
+</section>
+
+<main class="screens">
+  <section class="screen">
+    <h2>Webcam / Video / Image</h2>
+    <div class="stage">
+      <canvas id="rawCanvas" width="1280" height="720"></canvas>
+      <p class="placeholder" id="rawPlaceholder">No source selected.</p>
+    </div>
+  </section>
+
+  <section class="screen">
+    <h2>Model Output</h2>
+    <div class="stage">
+      <canvas id="outCanvas" width="1280" height="720"></canvas>
+      <p class="placeholder" id="outPlaceholder">Detections will appear here.</p>
+    </div>
+  </section>
+</main>
+
+<section class="logs" id="logs" hidden>
+  <div class="logs-grid">
+    <div class="logs-col">
+      <h3>Detections</h3>
+      <ul class="detections" id="detectionList"><li class="empty">No detections yet.</li></ul>
+    </div>
+    <div class="logs-col">
+      <h3>Event log</h3>
+      <div class="log" id="log"></div>
+      <h3>Raw response</h3>
+      <pre class="raw" id="rawJson">{}</pre>
+    </div>
+  </div>
+</section>
+
+<video id="video" playsinline muted hidden></video>
+<script src="/static/app.js"></script>
+</body>
+</html>
