@@ -16,21 +16,23 @@ while it stays in view. No login: it's a demo.
 ### Requirements
 
 - **Python 3.10+** (tested with Python 3.14 on macOS)
-- **Git LFS**: the model weights (`best.pt`, about 125 MB) are stored in Git LFS
+- An internet connection on first run: the model weights (`best.pt`, about 125 MB) are downloaded from the [v1.0.0 release](https://github.com/vish2293/netram-gun-detection/releases/tag/v1.0.0)
 - A modern browser (Chrome, Edge, Firefox or Safari)
 - Optional: an NVIDIA GPU (CUDA) or an Apple Silicon Mac (MPS). Without one, the app runs on CPU, more slowly.
 
-### 1. Get the code and the model weights
+### 1. Get the code
 
 ```bash
 git clone git@github.com:vish2293/netram-gun-detection.git
 cd netram-gun-detection
-git lfs install
-git lfs pull          # downloads the real best.pt
 ```
 
-If `best.pt` is only a few hundred bytes, it's an LFS pointer file, not the
-weights. Run `git lfs pull` again.
+The model weights are not in the repo. On first start, `app.py` downloads
+`best.pt` from the
+[v1.0.0 release](https://github.com/vish2293/netram-gun-detection/releases/download/v1.0.0/best.pt)
+and checks its size and SHA-256. If the file is missing, incomplete or
+corrupt, it is downloaded again. To get it by hand instead (for example on an
+offline machine), download it from that link and put it next to `app.py`.
 
 ### 2. Start the app
 
@@ -76,7 +78,7 @@ block camera access on plain-HTTP network addresses.
 
 | Problem | Fix |
 | --- | --- |
-| `_pickle.UnpicklingError` or an error loading `best.pt` | The weights are an LFS pointer. Run `git lfs pull`. |
+| `Could not download the model weights` | No internet access on first run. Download [`best.pt`](https://github.com/vish2293/netram-gun-detection/releases/download/v1.0.0/best.pt) by hand and put it next to `app.py`. |
 | `Address already in use` | Something else is on port 8000. Stop it, or start uvicorn with `--port 8001`. |
 | Webcam says "unavailable" | Allow camera access for the page, and make sure you're on `127.0.0.1`, not a LAN IP. |
 | Very low FPS | You're probably on CPU. Check the device in the startup log, or in the event log under **Show Logs**. |
@@ -188,7 +190,7 @@ Plain HTML, CSS and JavaScript. No framework and no build step.
 
 | | |
 | --- | --- |
-| File | `best.pt` (about 125 MB, Git LFS) |
+| File | `best.pt` (about 125 MB, from the [v1.0.0 release](https://github.com/vish2293/netram-gun-detection/releases/tag/v1.0.0)) |
 | Architecture | YOLO26m, 21.8 M parameters |
 | Classes | 1: `Real Gun` |
 | Trained with | Ultralytics 8.4.126, 1280 px images, best epoch 65 of 100 |
@@ -324,7 +326,7 @@ tracker state (reply: `{"reset": true}`). A bad frame returns
 ```text
 netram-gun-detection/
 ├── app.py              FastAPI app: model loading, image endpoint, WebSocket tracking
-├── best.pt             Trained YOLO26m weights, 1 class (Git LFS)
+├── best.pt             Trained YOLO26m weights, 1 class (downloaded on first run, not in git)
 ├── bytetrack.yaml      Tracker settings
 ├── requirements.txt    Python dependencies
 ├── run.sh              Creates venv/ on first run, then starts uvicorn on 127.0.0.1:8000
