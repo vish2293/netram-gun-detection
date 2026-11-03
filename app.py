@@ -8,8 +8,12 @@ stays in view.
 import asyncio
 import base64
 import binascii
+import hashlib
 import json
+import os
+import sys
 import time
+import urllib.request
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -24,6 +28,13 @@ from ultralytics import YOLO
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "best.pt"
+# The weights are not stored in git. They are fetched from the GitHub release
+# on first run, and checked against this size and hash every time.
+MODEL_URL = (
+    "https://github.com/vish2293/netram-gun-detection/releases/download/v1.0.0/best.pt"
+)
+MODEL_SIZE = 131_258_303
+MODEL_SHA256 = "77689b29673c9ccacc0e363511f29f7a46d07cdd6dcd5bd02a6ab95df567e22e"
 STATIC_DIR = BASE_DIR / "static"
 
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
@@ -46,6 +57,70 @@ def pick_device() -> str:
 
 DEVICE = pick_device()
 
+
+def sha256_of(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def model_is_valid(path: Path) -> bool:
+    return (
+        path.is_file()
+        and path.stat().st_size == MODEL_SIZE
+        and sha256_of(path) == MODEL_SHA256
+    )
+
+
+def download_model(dest: Path) -> None:
+    """Download the weights to a temp file, verify them, then move into place."""
+    tmp = dest.with_suffix(".pt.part")
+    print(f"[weapon-detect] downloading model from {MODEL_URL}", flush=True)
+    try:
+        with urllib.request.urlopen(MODEL_URL, timeout=60) as response, tmp.open("wb") as out:
+            total = int(response.headers.get("Content-Length") or MODEL_SIZE)
+            done = 0
+            while chunk := response.read(1024 * 1024):
+                out.write(chunk)
+                done += len(chunk)
+                pct = done * 100 // total
+                sys.stdout.write(
+                    f"\r[weapon-detect]   {done / 1e6:6.1f} / {total / 1e6:.1f} MB ({pct}%)"
+                )
+                sys.stdout.flush()
+        print(flush=True)
+    except OSError as exc:
+        tmp.unlink(missing_ok=True)
+        raise RuntimeError(
+            f"Could not download the model weights: {exc}\n"
+            f"Download best.pt by hand from {MODEL_URL} and put it at {dest}"
+        ) from exc
+
+    if not model_is_valid(tmp):
+        tmp.unlink(missing_ok=True)
+        raise RuntimeError(
+            "The downloaded best.pt failed the size/sha256 check "
+            f"(expected {MODEL_SIZE} bytes, sha256 {MODEL_SHA256}).\n"
+            f"Download it by hand from {MODEL_URL} and put it at {dest}"
+        )
+    os.replace(tmp, dest)
+
+
+def ensure_model(path: Path) -> None:
+    if model_is_valid(path):
+        return
+    if path.exists():
+        print(
+            f"[weapon-detect] {path.name} is corrupt or incomplete "
+            f"({path.stat().st_size} bytes), downloading a fresh copy",
+            flush=True,
+        )
+    download_model(path)
+
+
+ensure_model(MODEL_PATH)
 model = YOLO(str(MODEL_PATH))
 CLASS_NAMES = model.names
 
